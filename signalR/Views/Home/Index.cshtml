@@ -1,0 +1,214 @@
+﻿@using System.Data;
+@{
+    ViewBag.Title = "Chat";
+}
+
+@*for a chat system like UI*@
+<div class="container col-sm-12" style="margin-top:40px;"></div>
+<div class="panel panel-primary col-sm-8" >
+    <div class="panel panel-heading" style="margin-left:-15px;margin-right:-15px;">
+        <input type="text" class="form-control" id="message_to" readonly style="border:none;width:100%;background-color:#428bca;" value="All"/>
+      
+        <input type="hidden" id="displayname" />
+    </div>
+    <div class="panel panel-body" style="max-height:300px;min-height:300px;overflow:auto;">
+        <div class="container-fluid" id="discussion">
+
+        </div>
+    </div>
+    <div class="panel panel-footer">
+      
+           
+        @*text and buttons for sending*@
+        <input type="text" class="form-control" id="message" style="border:none;width:100%;background-color:#f5f5f5;" autofocus />
+
+    </div>
+   
+</div>
+
+@*upto here*@
+<div class="col-sm-4">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h4>Active users</h4>
+        </div>
+        <div class="panel-body" id="active_users">
+            <div class='form-group active_us'>
+                <p class='form-control text-primary'>All</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section styles{
+    <style>
+        input:focus{
+            outline:none;
+            box-shadow:0px 0px 0px transparent !important;
+        }
+         input{
+            outline:none;
+            box-shadow:0px 0px 0px transparent !important;
+        }
+    </style>
+    }
+
+@section scripts{
+<script src="~/scripts/jquery-1.6.4.min.js"></script>
+<script src="~/scripts/jquery-1.10.2.js"></script>
+<script src="~/scripts/jquery.signalR-2.2.2.js"></script>
+    <script src="/signalr/hubs"></script>
+   
+    <script>
+
+        $(function () {
+
+           
+            var chat = $.connection.chatHub;
+            chat.client.broadcastMessage = function (name, message,message_from,message_to) {
+                var encodedName = $('<div/>').text(name).html();
+                var encodedMsg = $('<div/>').text(message).html();
+                //add message to the page
+                if (message_from == $('#displayname').val()) {
+                    //show message on right side
+                    $('#discussion').prepend('<div class="col-sm-8" style="float:right;text-align:right;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
+                }
+                if (message_to == $('#displayname').val()) {
+                    //show message on left side
+                    $('#discussion').prepend('<div class="col-sm-8" style="float:left;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
+                };
+                if (message_to == "All" && message_from != $('#displayname').val()) {
+                    //show message on left side
+                    $('#discussion').prepend('<div class="col-sm-8" style="float:left;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
+                };
+               
+                
+            };
+            //append just added username to the active users list
+            chat.client.getUsername = function (name) {
+             
+                if ($('#displayname').val() != name) {
+                  
+                    $('#active_users').append("<div class='form-group active_us'>                 <p class='form-control text-primary' >" + name + "</p></div>");
+                    $('.active_us').on('click', function () {
+
+                        //    //store value in variable
+                        var txt = $(this).find('p').text();
+                        //    //put value in hidden box
+                        $('#message_to').val(txt);
+                    });
+                };
+            };
+
+                //remove user from list whenever they leaves
+            chat.client.removedUser = function (user) {
+               
+                if ($('#displayname').val() != user) {
+                    //get count
+                    var count = $('.active_us').length;
+                    var active_us = $('.active_us');
+                    for (var i = 0; i < count ; i++) {
+                        if (jQuery.trim(active_us.eq(i).text()) == user) {
+                            $(active_us.eq(i)).remove();
+                        }
+                    }
+                };
+            };
+
+            //get username and store it to prepend to messages.
+            $('#displayname').val(prompt('Enter your name:', ''));
+            //set initial focus to message input box
+            $('#message').focus();
+            //start the connection.
+            $.connection.hub.start().done(function () {
+                saveUsernameOnConnection();
+                //load active users from database
+                getActiveUsers();
+               
+                //submit message when enter key is pressed in message
+                $('#message').on("keypress", function () {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode == '13') {
+                        //submit a form
+                        if ($('#message').val() == "") {
+                            return;
+                        }
+                        if ($('#message_to').val() == "" || $('#message_to').val() == null) {
+                            alert("Please choose a receiver from RHS");
+                            return;
+                        }
+                        //call the send method on the hub
+                        chat.server.send($('#displayname').val(), $('#message').val(), $('#displayname').val(), $('#message_to').val());
+
+                        //clear text box and reset focus for next comment.
+                        $('#message').val('').focus();
+                    }
+                });
+
+                //upto here
+            });
+
+            function saveUsernameOnConnection() {
+                var user_name = $('#displayname').val();
+                chat.server.saveUserDetails(user_name);
+                //send username to server so that it can be used to broadcast to all clients
+                chat.server.shareUsername(user_name);
+            }
+            //used to get active users list after page is loaded
+            function getActiveUsers() {
+                var name = $('#displayname').val();
+               // alert(name);
+                $.ajax({
+                        url: "@Url.Action("index","home")",
+                        type: "POST",
+                        data: JSON.stringify({user_name : name}),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (users) {
+                            $.each(users, function (i, res) {
+                                $('#active_users').append("<div class='form-group active_us'>                 <p class='form-control text-primary' >" + res["user_name"] + "</p></div>");
+                            });
+
+                            //function to put active user name in hidden message_to input type
+                            //only after ajax success call
+                           $('.active_us').on('click', function () {
+                             
+                            //    //store value in variable
+                                var txt = $(this).find('p').text();
+                            //    //put value in hidden box
+                                $('#message_to').val(txt);
+                              
+                            });
+                           
+                        },
+                    error: function (data) {
+                        alert(data);
+                    }
+                });
+            };
+        //fill_data=  function(data) {
+        //      //    //store value in variable
+        //      var txt = data;
+        //      //    //put value in hidden box
+        //        $('#message_to').val(txt);
+        //};
+
+            //page closing event
+            //remove username from database
+        $(window).on("beforeunload", function () {
+          
+            chat.server.removeUsername($('#displayname').val());
+        });
+        $('.active_us').on('click', function () {
+
+            //    //store value in variable
+            var txt = $(this).find('p').text();
+            //    //put value in hidden box
+            $('#message_to').val(txt);
+        });
+        })
+     
+
+    </script>
+    }
