@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "71bb688f-1f7d-4c98-98dc-30761e6137ac": {
+      "ProjectGuid": "71bb688f-1f7d-4c98-98dc-30761e6137ac",
+      "DisplayName": "signalR",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

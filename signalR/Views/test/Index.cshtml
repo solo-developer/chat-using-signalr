@@ -76,38 +76,6 @@
     </div>
     @*upto here*@
 
-@section styles{
-    <style>
-        input:focus {
-            outline: none;
-            box-shadow: 0px 0px 0px transparent !important;
-        }
-
-        input {
-            outline: none;
-            box-shadow: 0px 0px 0px transparent !important;
-        }
-       
-          .conv
-    {
-        padding: 10px;
-        background-color: lightblue;
-        border-radius: 5px;
-        position: relative;
-    }
-    .conv::before
-    {
-        display: block;
-        border: 10px solid transparent;
-        border-right-color: lightblue;
-        position: absolute;
-        bottom: 5px;
-        left: -20px;
-        content:"";
-    }
-    </style>
-}
-
 @section scripts{
     <script src="~/scripts/jquery-1.6.4.min.js"></script>
     <script src="~/scripts/jquery-1.10.2.js"></script>
