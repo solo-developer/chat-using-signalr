@@ -11,11 +11,12 @@ $(document).ready(function () {
 
         if ($('#' + message_from).length == 0 && $('#' + message_to).length == 0) {
             if (message_from == $('#displayname').val()) {
-                appendMessageAndTabsIfNecessary(message_to, encodedName, encodedMsg, 'left');
-
+                addTabs(message_from);
+                appendMessage(message_to, encodedName, encodedMsg, 'left');
             }
             else if (message_to == $('#displayname').val()) {
-                appendMessageAndTabsIfNecessary(message_from, encodedName, encodedMsg, 'left');
+                addTabs(message_from);
+                appendMessage(message_from, encodedName, encodedMsg, 'left');
             }
 
         }
@@ -23,9 +24,7 @@ $(document).ready(function () {
             //add only messages since tab is already present
 
             if (message_to == $('#displayname').val()) {
-                //put message on the left side
-                $('#discussion_' + message_from).prepend('<div class="col-sm-8" style="float:left;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
-
+                appendMessage(message_from, encodedName, encodedMsg, 'left');
                 //if tab is not active then add a count in tab
                 if ($('div.active').eq(0).attr('id') != message_from) {
                     $('#' + message_from + '_User').text(message_from + '(1)');
@@ -33,27 +32,17 @@ $(document).ready(function () {
             }
 
             if (message_from == $('#displayname').val() && message_to != "All") {
-                //put message on the right side
-                $('#discussion_' + message_to).prepend('<div class="col-sm-8" style="float:right;text-align:right;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
-
-                //if tab is not active then add a count in tab
-                //if ($('.active').eq(0).attr('id') != message_to) {
-                //    $('#' + message_to + '_User').text(message_to + '(1)');
-                //}
+                appendMessage(message_to, encodedName, encodedMsg, 'right', 'right');
             }
             if (message_to == "All") {
-                if (message_from == $('#displayname').val()) {
-                    $('#discussion_All').prepend('<div class="col-sm-8" style="float:right;text-align:right;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
-                }
-                else {
-                    $('#discussion_All').prepend('<div class="col-sm-8" style="float:left;text-align:left;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
-                    //if tab is not active then add a count in tab
+                let direction = message_from == $('#displayname').val() ? 'right' : 'left';
+                appendMessage('All', encodedName, encodedMsg, direction, direction);
+
+                if (message_from != $('#displayname').val()) {
                     if ($('.active').eq(0).attr('id') != message_to) {
                         $('#' + message_to + '_User').text(message_to + '(1)');
                     }
                 }
-
-
             }
         }
     };
@@ -268,9 +257,7 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '.active_us', function () {
-        //store value in variable
         var txt = $(this).find('p').text();
-        //put value in hidden box
         $('#message_to').val(txt);
         $('#message').focus();
 
@@ -285,12 +272,16 @@ $(document).ready(function () {
     });
 });
 
-function appendMessageAndTabsIfNecessary(userName, encodedName, encodedMessage, floatDirection, textAlign = 'left') {
-    $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + userName + '" class="a-white" id="' + userName + '_User" this_val=' + userName + '>' + userName + '(1)</a></li>');
-    //add new div-content and prepend a message
-    $('.tab-content').prepend('<div id="' + userName + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + userName + '"></div></div>');
+function appendMessage(userName, encodedName, encodedMessage, floatDirection, textAlign = 'left') {
     //add message
     $('#discussion_' + userName).prepend(`<div class="col-sm-8" style="float:${floatDirection};text-align:${textAlign};font-size:18px;"><strong>${encodedName}</strong>:&nbsp;&nbsp;${encodedMessage}</div>`);
+}
+
+function addTabs(userName) {
+    $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + userName + '" class="a-white" id="' + userName + '_User" this_val=' + userName + '>' + userName + '(1)</a></li>');
+
+    //add new div-content and prepend a message
+    $('.tab-content').prepend('<div id="' + userName + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + userName + '"></div></div>');
 }
 
 function uploadimage() {
@@ -351,38 +342,6 @@ function getActiveUsers() {
         success: function (users) {
             $.each(users, function (i, res) {
                 $('#active_users').append("<div class='form-group active_us'>                 <p class='form-control text-primary' >" + res["user_name"] + "</p></div>");
-            });
-
-            //function to put active user name in hidden message_to input type
-            //only after ajax success call
-            $('.active_us').on('click', function () {
-
-                //    //store value in variable
-                var txt = $(this).find('p').text();
-                //put value in hidden box
-                $('#message_to').val(txt);
-                $('#message').focus();
-
-                if ($('#' + txt).length == 0) {
-
-                    // else create a new tab
-                    $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + txt + '" class="a-white" id="' + txt + '_User" this_val=' + txt + '>' + txt + '</a></li>');
-                    //add new div-content and prepend a message
-                    $('.tab-content').prepend('<div id="' + txt + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + txt + '"></div></div>');
-
-
-                    //store value in message_to field
-
-                }
-                $("#" + txt + "_User").click();
-                $('.a-white').on('click', function () {
-                    var user_name = $(this).attr('this_val');
-
-                    $('#message_to').val(user_name);
-                    //change the name(1) to name as the message will be seen
-                    $('#' + user_name + '_User').text(user_name);
-
-                });
             });
         },
         error: function (data) {
