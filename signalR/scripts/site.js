@@ -244,7 +244,6 @@ $(document).ready(function () {
             alert("User is offline.");
             return;
         }
-        //upto here
         if ($('#message_to').val() == "" || $('#message_to').val() == null) {
             alert("Please choose a receiver from RHS");
             return;
@@ -261,14 +260,12 @@ $(document).ready(function () {
         $('#message_to').val(txt);
         $('#message').focus();
 
-        if ($('#' + txt).length == 0) {
-            // else create a new tab
-            $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + txt + '" class="a-white" id="' + txt + '_User" this_val=' + txt + '>' + txt + '</a></li>');
-            //add new div-content and prepend a message
-            $('.tab-content').prepend('<div id="' + txt + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + txt + '"></div></div>');
-
+        let isTabUnavailableOfUser = $(`#${txt}`).length == 0;
+        if (isTabUnavailableOfUser) {
+            addTabs(txt);
+           
         }
-        $("#" + txt + "_User").click();
+        $(`#${txt}_User`).click();
     });
 });
 
