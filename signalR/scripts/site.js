@@ -1,4 +1,5 @@
 ﻿var chat = undefined;
+
 $(document).ready(function () {
     chat = $.connection.chatHub;
     chat.client.broadcastMessage = function (name, message, message_from, message_to) {
@@ -10,23 +11,11 @@ $(document).ready(function () {
 
         if ($('#' + message_from).length == 0 && $('#' + message_to).length == 0) {
             if (message_from == $('#displayname').val()) {
-                //add message_to in tab
-                //add new tab and tab-content
-                $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + message_to + '" class="a-white" id="' + message_to + '_User" this_val=' + message_to + '>' + message_to + '(1)</a></li>');
-                //add new div-content and prepend a message
-                $('.tab-content').prepend('<div id="' + message_to + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + message_to + '"></div></div>');
-                //add message
-                $('#discussion_' + message_to).prepend('<div class="col-sm-8" style="float:right;text-align:right;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
+                appendMessageAndTabsIfNecessary(message_to, encodedName, encodedMsg, 'left');
 
             }
             else if (message_to == $('#displayname').val()) {
-                //add message_from in tab
-                //add new tab and tab-content
-                $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + message_from + '" class="a-white" id="' + message_from + '_User" this_val=' + message_from + '>' + message_from + '(1)</a></li>');
-                //add new div-content and prepend a message
-                $('.tab-content').prepend('<div id="' + message_from + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + message_from + '"></div></div>');
-                //message
-                $('#discussion_' + message_from).prepend('<div class="col-sm-8" style="float:left;font-size:18px;"><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</div>');
+                appendMessageAndTabsIfNecessary(message_from, encodedName, encodedMsg, 'left');
             }
 
         }
@@ -295,6 +284,14 @@ $(document).ready(function () {
         $("#" + txt + "_User").click();
     });
 });
+
+function appendMessageAndTabsIfNecessary(userName, encodedName, encodedMessage, floatDirection, textAlign = 'left') {
+    $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + userName + '" class="a-white" id="' + userName + '_User" this_val=' + userName + '>' + userName + '(1)</a></li>');
+    //add new div-content and prepend a message
+    $('.tab-content').prepend('<div id="' + userName + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + userName + '"></div></div>');
+    //add message
+    $('#discussion_' + userName).prepend(`<div class="col-sm-8" style="float:${floatDirection};text-align:${textAlign};font-size:18px;"><strong>${encodedName}</strong>:&nbsp;&nbsp;${encodedMessage}</div>`);
+}
 
 function uploadimage() {
     var file = $('#imagebrowse').get(0).files;
