@@ -1,5 +1,4 @@
 ﻿var chat = undefined;
-
 $(document).ready(function () {
     chat = $.connection.chatHub;
     chat.client.broadcastMessage = function (name, message, message_from, message_to) {
@@ -27,7 +26,7 @@ $(document).ready(function () {
                 appendMessage(message_from, encodedName, encodedMsg, 'left');
                 //if tab is not active then add a count in tab
                 if ($('div.active').eq(0).attr('id') != message_from) {
-                    $('#' + message_from + '_User').text(message_from + '(1)');
+                    showMessageCountInTab(message_from, 1);
                 }
             }
 
@@ -40,7 +39,7 @@ $(document).ready(function () {
 
                 if (message_from != $('#displayname').val()) {
                     if ($('.active').eq(0).attr('id') != message_to) {
-                        $('#' + message_to + '_User').text(message_to + '(1)');
+                        showMessageCountInTab(message_to, 1);
                     }
                 }
             }
@@ -48,24 +47,9 @@ $(document).ready(function () {
     };
     //append just added username to the active users list
     chat.client.getUsername = function (name) {
-
         if ($('#displayname').val() != name) {
-
-            $('#active_users').append("<div class='form-group active_us'>                 <p class='form-control text-primary' >" + name + "</p></div>");
-            $('.active_us').on('click', function () {
-
-                //store value in variable
-                var txt = $(this).find('p').text();
-                //put value in hidden box
-                $('#message_to').val(txt);
-                $('#message').focus();
-                if ($('#' + txt).length == 0) {
-                    $('.nav-tabs').append('<li><a data-toggle="tab" href="#' + txt + '" class="a-white" id="' + txt + '_User" >' + txt + '</a></li>');
-                    //add new div-content and prepend a message
-                    $('.tab-content').prepend('<div id="' + txt + '" class="tab-pane fade"><div class="container-fluid" id="discussion_' + txt + '"></div></div>');
-                }
-                $("#" + txt + "_User").click();
-            });
+            let userTemplate = getUserTemplate(name);
+            $('#active_users').append(userTemplate);
         };
     };
 
@@ -263,7 +247,7 @@ $(document).ready(function () {
         let isTabUnavailableOfUser = $(`#${txt}`).length == 0;
         if (isTabUnavailableOfUser) {
             addTabs(txt);
-           
+
         }
         $(`#${txt}_User`).click();
     });
@@ -329,7 +313,6 @@ function saveUsernameOnConnection() {
 
 function getActiveUsers() {
     var name = $('#displayname').val();
-    // alert(name);
     $.ajax({
         url: "/test/index",
         type: "POST",
@@ -338,7 +321,9 @@ function getActiveUsers() {
         dataType: "json",
         success: function (users) {
             $.each(users, function (i, res) {
-                $('#active_users').append("<div class='form-group active_us'>                 <p class='form-control text-primary' >" + res["user_name"] + "</p></div>");
+
+                let template = getUserTemplate(res["user_name"]);
+                $('#active_users').append(template);
             });
         },
         error: function (data) {
@@ -346,3 +331,13 @@ function getActiveUsers() {
         }
     });
 };
+
+function showMessageCountInTab(userName, count) {
+    $(`#${userName}_User`).text(`${userName}(${count})`);
+}
+
+function getUserTemplate(userName) {
+    return `<div class='form-group active_us'>
+                <p class='form-control text-primary' >${userName}</p>
+            </div>`;
+}
